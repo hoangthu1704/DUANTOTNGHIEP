@@ -4,92 +4,73 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
-use Gloudemans\Shoppingcart\Facades\Cart;
-use Illuminate\Support\Facades\Session;
+use App\Models\Coupon;
 use Carbon\Carbon;
-use Auth;
-use Barryvdh\DomPDF\Facade\Pdf;
-use DB;
-
-class OrderController extends Controller
+ 
+class CouponController extends Controller
 {
-    //lấy danh sách đơn hàng đang chờ xử lý
-    public function PendingOrder()
-    {
-        $orders = Order::where('status', 'pending')->get();
-        return view('backend.orders.pending_orders', compact('orders'));
+    public function AllCoupon() {
+        $coupons = Coupon::all(); 
+        return view('backend.coupon.coupon_all', compact('coupons'));
     }
-    // End Method 
-
-    //xem chi tiết đơn hàng
-    public function AdminOrderDetails($id)
-    {
-        $order = Order::findOrFail($id);
-        return view('backend.orders.admin_order_details', compact('order'));
-    }// End Method 
     
-
-    // danh sách đơn hàng đã xác nhận
-    public function AdminConfirmedOrder()        
-    {
-        $orders = Order::where('status', 'confirmed')->get();
-        return view('backend.orders.confirmed_orders', compact('orders'));
-    }
-    // Method cap nhat trang thai don hang pending->confirmed
-    public function ChangeConfirmedOrder($id)        
-    {
-        $order = Order::findOrFail($id); // Nếu không tìm thấy sẽ tự động báo lỗi 404
+    public function AddCoupon(Request $request) {
+        if ($request->isMethod('post')) {
+            // Validate dữ liệu từ form
+            $request->validate([
+                'coupon_name' => 'required|string|max:255',
+                'coupon_discount' => 'required|numeric|min:0|max:100',
+                'coupon_validity' => 'nullable|date|after_or_equal:today',
+            ]);
     
-        if ($order->status === 'pending') {
-            $order->update(['status' => 'confirmed']);
+            // Lưu dữ liệu vào database
+            Coupon::create([
+                'name' => $request->coupon_name,
+                'discount' => $request->coupon_discount,
+                'expiry_date' => $request->coupon_validity,
+            ]);
+    
+           
+            return redirect()->route('all.coupon')->with('success', 'Coupon added successfully.');
         }
     
-        return redirect()->route('admin.confirmed.order');
         
+        return view('backend.coupon.coupon_add');
+    }
+    
+    public function EditCoupon($id) {
+        $coupon = Coupon::findOrFail($id);
+        return view('backend.coupon.edit_coupon', compact('coupon'));
     }
 
+    public function UpdateCoupon(Request $request, $id) {
+        $coupon = Coupon::findOrFail($id);
+        $request->validate([
+            'coupon_name' => 'required|string|max:255',
+            'coupon_discount' => 'required|numeric|min:0|max:100',
+            'coupon_validity' => 'nullable|date|after_or_equal:today',
+        ]);
 
-    // End Method 
+        $coupon->update([
+            'name' => $request->coupon_name,
+            'discount' => $request->coupon_discount,
+            'expiry_date' => $request->coupon_validity,
+        ]);
 
-
-
-    public function AdminProcessingOrder()
-    {
-        $orders = Order::where('status', 'processing')->get();
-        return view('backend.orders.processing_orders', compact('orders'));
-    } // End Method 
-
-    public function ChangeProcessingOrder($id)        
-    {
-        $order = Order::findOrFail($id); // Nếu không tìm thấy sẽ tự động báo lỗi 404
-    
-        if ($order->status === 'confirmed') {
-            $order->update(['status' => 'processing']);
-        }
-    
-        return redirect()->route('admin.processing.order');
-        
+        return redirect()->route('all.coupon')->with('success', 'Coupon updated successfully.');
     }
 
-
-    public function AdminDeliveredOrder()
-    {
-        $orders = Order::where('status', 'delivered')->get();
-        return view('backend.orders.delivered_orders', compact('orders'));
-    } // End Method 
-
-    public function ChangeDeliveryOrder($id)        
-    {
-        $order = Order::findOrFail($id); // Nếu không tìm thấy sẽ tự động báo lỗi 404
-    
-        if ($order->status === 'processing') {
-            $order->update(['status' => 'delivered']);
+    public function DeleteCoupon($id) {
+        $coupon = Coupon::find($id);
+        if (!$coupon) {
+            return redirect()->route('all.coupon')->with('error', 'Coupon not found.');
         }
-    
-        return redirect()->route('admin.delivered.order');
-        
+
+        try {
+            $coupon->delete();
+            return redirect()->route('all.coupon')->with('success', 'Coupon deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('all.coupon')->with('error', 'Failed to delete coupon. It may be referenced elsewhere.');
+        }
     }
 }

@@ -31,6 +31,8 @@ use App\Http\Controllers\VendorController;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Support\Facades\Route;
 
+
+
 /// Admin Dashboard
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -118,11 +120,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
 
-    // Coupon All Route 
-    Route::controller(CouponController::class)->group(function () {
-        Route::get('/all/coupon', 'AllCoupon')->name('all.coupon');
-        Route::get('/add/coupon', 'AddCoupon')->name('add.coupon');
-    });
+   // Coupon All Route 
+   Route::controller(CouponController::class)->group(function () {
+    Route::get('/all/coupon', 'AllCoupon')->name('all.coupon');
+    Route::match(['get', 'post'], '/add/coupon', 'AddCoupon')->name('add.coupon');
+    Route::get('/edit/coupon/{id}', 'EditCoupon')->name('edit.coupon');
+    Route::put('/update/coupon/{id}', 'UpdateCoupon')->name('update.coupon');
+
+    Route::delete('/delete/coupon/{id}', [CouponController::class, 'DeleteCoupon'])->name('delete.coupon');
+
+});
 
     // Admin Order All Route 
     Route::controller(OrderController::class)->group(function () {
@@ -142,16 +149,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Return Order All Route 
     Route::controller(ReturnController::class)->group(function () {
-     Route::get('/return/orders', 'index')->name('return.request');
-     Route::get('/return/orders/create', 'create')->name('return.create');
-     Route::post('/return/orders', 'store')->name('return.store');
-     Route::get('/return/orders/{returnOrder}', 'show')->name('return.show');
-     Route::get('/return/orders/{returnOrder}/edit', 'edit')->name('return.edit');
-     Route::put('/return/orders/{returnOrder}', 'update')->name('return.update');
-     Route::delete('/return/orders/{returnOrder}', 'destroy')->name('return.destroy');
-     Route::get('/complete/return/request', 'CompleteReturnRequest')->name('complete.return.request');
-     Route::post('/return/orders/{returnOrder}/process', 'processReturn')->name('return.process');
- });
+        Route::get('/return/request', 'ReturnRequest')->name('return.request');
+
+        Route::get('/complete/return/request', 'CompleteReturnRequest')->name('complete.return.request');
+    });
+
 
     // Report All Route 
     Route::controller(ReportController::class)->group(function () {
@@ -207,10 +209,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
 
+   
     // Site Setting All Route 
     Route::controller(SiteSettingController::class)->group(function () {
-        Route::get('/site/setting', 'SiteSetting')->name('site.setting');
-        Route::get('/seo/setting', 'SeoSetting')->name('seo.setting');
+        Route::get('/site/setting', [SiteSettingController::class, 'editSiteSetting'])->name('site.setting');
+
+        Route::get('/seo/setting', 'SeoSetting')->name('seo.setting'); // Hiển thị trang SEO
+        Route::post('/site/setting/update/{id}', [SiteSettingController::class, 'UpdateSiteSetting'])->name('site.setting.update');
+
+
+
     });
 
 
@@ -262,7 +270,7 @@ Route::middleware(['auth'])->group(function () {
 // Minh Tan Start
 Route::middleware(['auth', 'role:vendor'])->group(function () {
 
-    Route::get('/vendor/dashboard', [VendorController::class, 'VendorDashboard'])->name('vendor.dashboard');
+    Route::get('/vendor/dashboard', [VendorController::class, 'VendorDashboard'])->name('vendor.dashobard');
 
     Route::get('/vendor/logout', [VendorController::class, 'VendorDestroy'])->name('vendor.logout');
 
@@ -333,6 +341,7 @@ Route::post('/vendor/register', [VendorController::class, 'VendorRegister'])->na
 // Duc Phu Start
 /// Frontend Product Details All Route 
 
+Route::get('/api/product/variant/{id}', [IndexController::class, 'jsonvariantproduct']);
 Route::get('/product/details/{id}/{slug}', [IndexController::class, 'ProductDetails']);
 Route::get('/vendor/details/{id}', [IndexController::class, 'VendorDetails'])->name('vendor.details');
 

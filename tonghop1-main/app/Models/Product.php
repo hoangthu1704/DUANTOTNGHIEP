@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
-use App\Http\Controllers\Backend\CategoryController;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Category;
+use App\Models\Brand;
 
 class Product extends Model
 {
-    protected $primaryKey='id';
+    use HasFactory;
+
+    protected $primaryKey = 'id';
 
     protected $attributes = [
-        'status' => 0
+        'status' => 0, // Mặc định sản phẩm là "Inactive"
     ];
-
     protected $fillable = [
         'brand_id',
         'category_id',
@@ -29,16 +33,20 @@ class Product extends Model
         'vendor_id',
         'status'
     ];
-
-    public function vendor(){
-        return $this->belongsTo(User::class,'vendor_id','id');
-    }
-
-    public function category(){
-        return $this->belongsTo(Category::class,'category_id','id');
-    }
     
-    public function brand(){
-        return $this->belongsTo(Brand::class,'brand_id','id');
+
+    public function vendor()
+    {
+        return $this->belongsTo(User::class, 'vendor_id', 'id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id', 'id');
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class, 'brand_id', 'id');
     }
 }
